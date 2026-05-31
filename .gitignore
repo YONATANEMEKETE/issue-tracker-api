@@ -1,0 +1,5 @@
+// add node modules and what should not be tracked 
+node_modules
+dist
+
+.env
