@@ -9,7 +9,9 @@
     "typecheck": "tsc --noEmit",
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "db:check": "tsx src/shared/scripts/db-check.ts",
+    "db:seed": "tsx src/shared/scripts/seed.ts"
   },
   "keywords": [],
   "author": "",
