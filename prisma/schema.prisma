@@ -1,5 +1,3 @@
-
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -7,4 +5,139 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum WorkspaceRole {
+  admin
+  member
+  viewer
+}
+
+enum ProjectStatus {
+  active
+  archived
+}
+
+enum IssueStatus {
+  backlog
+  todo
+  in_progress
+  blocked
+  done
+  archived
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  memberships      WorkspaceMembership[]
+  createdWorkspaces Workspace[]           @relation("WorkspaceCreatedBy")
+  createdProjects   Project[]              @relation("ProjectCreatedBy")
+  createdIssues     Issue[]                @relation("IssueCreatedBy")
+  assignedIssues    Issue[]                @relation("IssueAssignee")
+  authoredComments  Comment[]              @relation("CommentAuthor")
+
+  @@map("users")
+}
+
+model Workspace {
+  id             String   @id @default(cuid())
+  name           String
+  createdByUserId String   @map("created_by_user_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  createdBy   User                 @relation("WorkspaceCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  memberships WorkspaceMembership[]
+  projects    Project[]
+  issues      Issue[]
+  comments    Comment[]
+
+  @@index([createdByUserId])
+  @@map("workspaces")
+}
+
+model WorkspaceMembership {
+  id          String       @id @default(cuid())
+  userId      String       @map("user_id")
+  workspaceId String       @map("workspace_id")
+  role        WorkspaceRole
+  joinedAt    DateTime     @default(now()) @map("joined_at")
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, workspaceId])
+  @@index([userId])
+  @@index([workspaceId])
+  @@map("workspace_memberships")
+}
+
+model Project {
+  id             String        @id @default(cuid())
+  workspaceId    String        @map("workspace_id")
+  name           String
+  description    String?
+  status         ProjectStatus @default(active)
+  createdByUserId String        @map("created_by_user_id")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  createdBy User      @relation("ProjectCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  issues    Issue[]
+
+  @@index([workspaceId])
+  @@index([createdByUserId])
+  @@map("projects")
+}
+
+model Issue {
+  id             String      @id @default(cuid())
+  workspaceId    String      @map("workspace_id")
+  projectId      String      @map("project_id")
+  title          String
+  description    String?
+  status         IssueStatus @default(backlog)
+  priority       String?
+  assigneeUserId String?     @map("assignee_user_id")
+  createdByUserId String     @map("created_by_user_id")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  assignee  User?     @relation("IssueAssignee", fields: [assigneeUserId], references: [id], onDelete: SetNull)
+  createdBy User      @relation("IssueCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  comments  Comment[]
+
+  @@index([workspaceId])
+  @@index([projectId])
+  @@index([assigneeUserId])
+  @@index([createdByUserId])
+  @@map("issues")
+}
+
+model Comment {
+  id           String   @id @default(cuid())
+  workspaceId   String   @map("workspace_id")
+  issueId       String   @map("issue_id")
+  authorUserId  String   @map("author_user_id")
+  body          String
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Restrict)
+  issue     Issue     @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  author    User      @relation("CommentAuthor", fields: [authorUserId], references: [id], onDelete: Restrict)
+
+  @@index([workspaceId])
+  @@index([issueId])
+  @@index([authorUserId])
+  @@map("comments")
 }
