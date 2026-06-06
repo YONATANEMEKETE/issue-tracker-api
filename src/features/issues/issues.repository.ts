@@ -19,35 +19,95 @@ export class IssueRepository {
       data,
     });
   }
-
   /**
-   * List all issues in a workspace (excluding archived issues by default).
+   * List workspace issues with pagination, sorting, active filters, and stable ordering.
    */
-  async listByWorkspace(workspaceId: string): Promise<Issue[]> {
-    return prisma.issue.findMany({
-      where: {
-        workspaceId,
-        status: { not: 'archived' }, // Exclude archived issues
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  async listByWorkspace(
+    workspaceId: string,
+    query: {
+      page: number;
+      limit: number;
+      sortBy: 'title' | 'status' | 'priority' | 'createdAt';
+      sortOrder: 'asc' | 'desc';
+      status?: IssueStatus;
+      projectId?: string;
+      assigneeUserId?: string;
+    },
+  ): Promise<{ total: number; data: Issue[] }> {
+    const {
+      page,
+      limit,
+      sortBy,
+      sortOrder,
+      status,
+      projectId,
+      assigneeUserId,
+    } = query;
+    const skip = (page - 1) * limit;
+    // Build dynamic where clause based on active filters
+    const where: any = {
+      workspaceId,
+      status: status ? status : { not: 'archived' }, // Exclude archived by default unless specifically requested
+    };
+    if (projectId) {
+      where.projectId = projectId;
+    }
+    if (assigneeUserId) {
+      where.assigneeUserId = assigneeUserId;
+    }
+    const [total, data] = await Promise.all([
+      prisma.issue.count({ where }),
+      prisma.issue.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: [
+          { [sortBy]: sortOrder },
+          { id: 'asc' }, // Stable sort fallback
+        ],
+      }),
+    ]);
+    return { total, data };
   }
 
   /**
-   * List all issues in a specific project.
+   * List issues in a project with pagination, sorting, filters, and stable ordering.
    */
   async listByProject(
     projectId: string,
     workspaceId: string,
-  ): Promise<Issue[]> {
-    return prisma.issue.findMany({
-      where: {
-        projectId,
-        workspaceId,
-        status: { not: 'archived' },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    query: {
+      page: number;
+      limit: number;
+      sortBy: 'title' | 'status' | 'priority' | 'createdAt';
+      sortOrder: 'asc' | 'desc';
+      status?: IssueStatus;
+      assigneeUserId?: string;
+    },
+  ): Promise<{ total: number; data: Issue[] }> {
+    const { page, limit, sortBy, sortOrder, status, assigneeUserId } = query;
+    const skip = (page - 1) * limit;
+    const where: any = {
+      projectId,
+      workspaceId,
+      status: status ? status : { not: 'archived' },
+    };
+    if (assigneeUserId) {
+      where.assigneeUserId = assigneeUserId;
+    }
+    const [total, data] = await Promise.all([
+      prisma.issue.count({ where }),
+      prisma.issue.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: [
+          { [sortBy]: sortOrder },
+          { id: 'asc' }, // Stable sort fallback
+        ],
+      }),
+    ]);
+    return { total, data };
   }
 
   /**

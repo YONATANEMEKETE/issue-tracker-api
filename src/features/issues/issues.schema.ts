@@ -18,3 +18,17 @@ export const updateIssueSchema = z.object({
 
 export type CreateIssueInput = z.infer<typeof createIssueSchema>;
 export type UpdateIssueInput = z.infer<typeof updateIssueSchema>;
+
+export const issueQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20),
+  sortBy: z
+    .enum(['title', 'status', 'priority', 'createdAt'])
+    .default('createdAt'),
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
+  status: z.nativeEnum(IssueStatus).optional(),
+  projectId: z.string().trim().optional(),
+  assigneeUserId: z.string().trim().optional(),
+});
+
+export type IssueQueryInput = z.infer<typeof issueQuerySchema>;

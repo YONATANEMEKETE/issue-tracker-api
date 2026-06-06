@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { issueController } from './issues.controller.js';
-import { updateIssueSchema } from './issues.schema.js';
+import { issueQuerySchema, updateIssueSchema } from './issues.schema.js';
 import { validate } from '../../shared/middlewares/validate.js';
 import { requireWorkspaceRole } from '../workspace/workspace.middleware.js';
 import { commentsRouter } from '../comments/comments.router.js';
@@ -13,7 +13,11 @@ issuesRouter.use('/:issueId/comments', commentsRouter);
 issuesRouter.get('/', issueController.listWorkspace.bind(issueController));
 
 // GET /workspaces/:workspaceId/issues/:issueId - Fetch single issue details
-issuesRouter.get('/:issueId', issueController.get.bind(issueController));
+issuesRouter.get(
+  '/:issueId',
+  validate({ query: issueQuerySchema }),
+  issueController.get.bind(issueController),
+);
 
 // PATCH /workspaces/:workspaceId/issues/:issueId - Update issue (Admin/Member only)
 issuesRouter.patch(

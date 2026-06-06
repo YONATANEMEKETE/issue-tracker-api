@@ -1,10 +1,17 @@
 import { Router } from 'express';
 import { projectController } from './projects.controller.js';
-import { createProjectSchema, updateProjectSchema } from './projects.schema.js';
+import {
+  createProjectSchema,
+  projectQuerySchema,
+  updateProjectSchema,
+} from './projects.schema.js';
 import { validate } from '../../shared/middlewares/validate.js';
 import { requireWorkspaceRole } from '../workspace/workspace.middleware.js';
 import { issueController } from '../issues/issues.controller.js';
-import { createIssueSchema } from '../issues/issues.schema.js';
+import {
+  createIssueSchema,
+  issueQuerySchema,
+} from '../issues/issues.schema.js';
 
 // mergeParams: true allows us to access :workspaceId from the parent router path!
 export const projectsRouter = Router({ mergeParams: true });
@@ -18,7 +25,11 @@ projectsRouter.post(
 );
 
 // GET /workspaces/:workspaceId/projects - List projects (All members can view)
-projectsRouter.get('/', projectController.list.bind(projectController));
+projectsRouter.get(
+  '/',
+  validate({ query: projectQuerySchema }),
+  projectController.list.bind(projectController),
+);
 
 // GET /workspaces/:workspaceId/projects/:projectId - Get single project (All members can view)
 projectsRouter.get(
@@ -53,5 +64,6 @@ projectsRouter.post(
 // GET /workspaces/:workspaceId/projects/:projectId/issues - List issues in a project (All members)
 projectsRouter.get(
   '/:projectId/issues',
+  validate({ query: issueQuerySchema }),
   issueController.listProject.bind(issueController),
 );

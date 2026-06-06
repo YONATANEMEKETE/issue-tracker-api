@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { issueService } from './issue.service.js';
-import { CreateIssueInput, UpdateIssueInput } from './issues.schema.js';
+import {
+  CreateIssueInput,
+  IssueQueryInput,
+  UpdateIssueInput,
+} from './issues.schema.js';
 
 export class IssueController {
   async create(req: Request, res: Response, next: NextFunction) {
@@ -27,12 +31,18 @@ export class IssueController {
   async listWorkspace(req: Request, res: Response, next: NextFunction) {
     try {
       const { workspaceId } = req.params;
-      const issues = await issueService.listWorkspaceIssues(
+      const query = req.query as unknown as IssueQueryInput;
+      const { total, data } = await issueService.listWorkspaceIssues(
         workspaceId as string,
+        query,
       );
-
       res.status(200).json({
-        data: issues,
+        data,
+        meta: {
+          page: query.page,
+          limit: query.limit,
+          total,
+        },
       });
     } catch (error) {
       next(error);
@@ -42,13 +52,21 @@ export class IssueController {
   async listProject(req: Request, res: Response, next: NextFunction) {
     try {
       const { workspaceId, projectId } = req.params;
-      const issues = await issueService.listProjectIssues(
+      const query = req.query as unknown as IssueQueryInput;
+      // Strip out projectId if it was passed in query string to avoid duplicate checks
+      const { projectId: _, ...projectQuery } = query;
+      const { total, data } = await issueService.listProjectIssues(
         projectId as string,
         workspaceId as string,
+        projectQuery,
       );
-
       res.status(200).json({
-        data: issues,
+        data,
+        meta: {
+          page: query.page,
+          limit: query.limit,
+          total,
+        },
       });
     } catch (error) {
       next(error);

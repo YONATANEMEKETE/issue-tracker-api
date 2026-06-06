@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { projectService } from './projects.services.js';
-import { CreateProjectInput, UpdateProjectInput } from './projects.schema.js';
+import {
+  CreateProjectInput,
+  ProjectQueryInput,
+  UpdateProjectInput,
+} from './projects.schema.js';
 
 export class ProjectController {
   async create(req: Request, res: Response, next: NextFunction) {
@@ -26,10 +30,18 @@ export class ProjectController {
   async list(req: Request, res: Response, next: NextFunction) {
     try {
       const { workspaceId } = req.params;
-      const projects = await projectService.listProjects(workspaceId as string);
-
+      const query = req.query as unknown as ProjectQueryInput;
+      const { total, data } = await projectService.listProjects(
+        workspaceId as string,
+        query,
+      );
       res.status(200).json({
-        data: projects,
+        data,
+        meta: {
+          page: query.page,
+          limit: query.limit,
+          total,
+        },
       });
     } catch (error) {
       next(error);

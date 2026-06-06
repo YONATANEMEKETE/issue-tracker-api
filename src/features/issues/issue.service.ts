@@ -3,7 +3,11 @@ import { projectRepository } from '../projects/projects.repository.js';
 import { workspaceRepository } from '../workspace/workspace.repository.js';
 import { notFound, validationError } from '../../shared/errors/error.js';
 import type { Issue } from '../../generated/prisma/client.js';
-import { CreateIssueInput, UpdateIssueInput } from './issues.schema.js';
+import {
+  CreateIssueInput,
+  IssueQueryInput,
+  UpdateIssueInput,
+} from './issues.schema.js';
 
 export class IssueService {
   /**
@@ -41,27 +45,24 @@ export class IssueService {
     });
   }
 
-  /**
-   * Business rule: List all issues in a workspace.
-   */
-  async listWorkspaceIssues(workspaceId: string): Promise<Issue[]> {
-    return issueRepository.listByWorkspace(workspaceId);
+  async listWorkspaceIssues(
+    workspaceId: string,
+    query: IssueQueryInput,
+  ): Promise<{ total: number; data: Issue[] }> {
+    return issueRepository.listByWorkspace(workspaceId, query);
   }
 
-  /**
-   * Business rule: List all issues in a specific project.
-   */
   async listProjectIssues(
     projectId: string,
     workspaceId: string,
-  ): Promise<Issue[]> {
+    query: Omit<IssueQueryInput, 'projectId'>,
+  ): Promise<{ total: number; data: Issue[] }> {
     // Verify project exists and belongs to the workspace
     const project = await projectRepository.findById(projectId);
     if (!project || project.workspaceId !== workspaceId) {
       throw notFound('Project not found in this workspace');
     }
-
-    return issueRepository.listByProject(projectId, workspaceId);
+    return issueRepository.listByProject(projectId, workspaceId, query);
   }
 
   /**

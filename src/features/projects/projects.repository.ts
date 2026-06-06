@@ -1,5 +1,6 @@
 import { prisma } from '../../shared/db/prisma.js';
 import type { Project } from '../../generated/prisma/client.js';
+import { ProjectQueryInput } from './projects.schema.js';
 
 export class ProjectRepository {
   /**
@@ -25,11 +26,29 @@ export class ProjectRepository {
    * List all projects in a workspace (excluding archived projects by default, or listing them).
    * We will list all projects that belong to the workspace.
    */
-  async listByWorkspace(workspaceId: string): Promise<Project[]> {
-    return prisma.project.findMany({
-      where: { workspaceId },
-      orderBy: { createdAt: 'desc' },
-    });
+  /**
+   * List projects with pagination, sorting, and stable ordering.
+   */
+  async listByWorkspace(
+    workspaceId: string,
+    query: ProjectQueryInput,
+  ): Promise<{ total: number; data: Project[] }> {
+    const { page, limit, sortBy, sortOrder } = query;
+    const skip = (page - 1) * limit;
+    const where = { workspaceId };
+    const [total, data] = await Promise.all([
+      prisma.project.count({ where }),
+      prisma.project.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: [
+          { [sortBy]: sortOrder },
+          { id: 'asc' }, // Stable sort fallback
+        ],
+      }),
+    ]);
+    return { total, data };
   }
 
   /**

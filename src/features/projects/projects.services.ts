@@ -1,7 +1,11 @@
 import { projectRepository } from './projects.repository.js';
 import { notFound } from '../../shared/errors/error.js';
 import type { Project } from '../../generated/prisma/client.js';
-import { CreateProjectInput, UpdateProjectInput } from './projects.schema.js';
+import {
+  CreateProjectInput,
+  ProjectQueryInput,
+  UpdateProjectInput,
+} from './projects.schema.js';
 
 export class ProjectService {
   /**
@@ -22,8 +26,11 @@ export class ProjectService {
   /**
    * Business rule: List all projects in a workspace.
    */
-  async listProjects(workspaceId: string): Promise<Project[]> {
-    return projectRepository.listByWorkspace(workspaceId);
+  async listProjects(
+    workspaceId: string,
+    query: ProjectQueryInput,
+  ): Promise<{ total: number; data: Project[] }> {
+    return projectRepository.listByWorkspace(workspaceId, query);
   }
 
   /**
