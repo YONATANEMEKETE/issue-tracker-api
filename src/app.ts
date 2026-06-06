@@ -8,6 +8,7 @@ import pg from 'pg';
 import { config } from './shared/configs/env.js';
 import { authRouter } from './features/auth/auth.router.js';
 import { deserializeUser } from './features/auth/auth.middleware.js';
+import { workspaceRouter } from './features/workspace/workspace.router.js';
 
 export const app = express();
 
@@ -42,6 +43,7 @@ app.use(
 app.use(deserializeUser);
 // TODO: Auth router
 app.use('/auth', authRouter);
+app.use('/workspaces', workspaceRouter);
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
