@@ -19,8 +19,11 @@
   "type": "module",
   "packageManager": "pnpm@11.5.0+sha512.dbfcc4f81cf48597afd4bc391ffdf12c11f1a9fb83a395bfa6b0a2d9cc2fd8ffebafdb1ccbd529632153f793904c2615b7f09fe1a345473fd1c35845172a8eb1",
   "devDependencies": {
+    "@types/connect-pg-simple": "^7.0.3",
     "@types/express": "^5.0.6",
+    "@types/express-session": "^1.19.0",
     "@types/node": "^25.9.1",
+    "@types/pg": "^8.20.0",
     "dotenv": "^17.4.2",
     "prisma": "^7.8.0",
     "tsx": "^4.22.3",
@@ -30,7 +33,10 @@
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "argon2": "^0.44.0",
+    "connect-pg-simple": "^10.0.0",
     "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "pg": "^8.21.0",
     "pino": "^10.3.1",
     "pino-http": "^11.0.0",
     "zod": "^4.4.3"
