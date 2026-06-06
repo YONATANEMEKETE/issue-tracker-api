@@ -10,11 +10,19 @@ import {
   requireWorkspaceMember,
   requireWorkspaceRole,
 } from './workspace.middleware.js';
+import { projectsRouter } from '../projects/projects.router.js';
 
 export const workspaceRouter = Router();
 
 // Apply authentication middleware globally to all workspace routes
 workspaceRouter.use(requireAuth);
+
+// 1. Nested Router mounting (must be placed BEFORE wildcard routes like `/:workspaceId` to avoid collision)
+workspaceRouter.use(
+  '/:workspaceId/projects',
+  requireWorkspaceMember,
+  projectsRouter,
+);
 
 // POST /workspaces - Create a new workspace
 workspaceRouter.post(
