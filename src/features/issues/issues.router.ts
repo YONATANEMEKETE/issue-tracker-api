@@ -3,8 +3,11 @@ import { issueController } from './issues.controller.js';
 import { updateIssueSchema } from './issues.schema.js';
 import { validate } from '../../shared/middlewares/validate.js';
 import { requireWorkspaceRole } from '../workspace/workspace.middleware.js';
+import { commentsRouter } from '../comments/comments.router.js';
 
 export const issuesRouter = Router({ mergeParams: true });
+
+issuesRouter.use('/:issueId/comments', commentsRouter);
 
 // GET /workspaces/:workspaceId/issues - List all issues in workspace
 issuesRouter.get('/', issueController.listWorkspace.bind(issueController));
