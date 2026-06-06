@@ -23,3 +23,5 @@ authRouter.post(
   requireAuth,
   authController.logout.bind(authController),
 );
+
+authRouter.get('/me', requireAuth, authController.me.bind(authController));
