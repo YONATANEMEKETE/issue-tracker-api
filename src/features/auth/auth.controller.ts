@@ -34,6 +34,19 @@ export class AuthController {
       next(error);
     }
   }
+
+  async logout(req: Request, res: Response, next: NextFunction) {
+    req.session.destroy((err) => {
+      if (err) {
+        return next(err);
+      }
+      // Clear the session cookie on the client browser
+      res.clearCookie('sid');
+
+      // Return 204 No Content (matching our API contract)
+      res.sendStatus(204);
+    });
+  }
 }
 
 export const authController = new AuthController();

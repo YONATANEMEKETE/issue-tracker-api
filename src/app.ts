@@ -7,6 +7,7 @@ import pgSession from 'connect-pg-simple';
 import pg from 'pg';
 import { config } from './shared/configs/env.js';
 import { authRouter } from './features/auth/auth.router.js';
+import { deserializeUser } from './features/auth/auth.middleware.js';
 
 export const app = express();
 
@@ -38,13 +39,13 @@ app.use(
   }),
 );
 
+app.use(deserializeUser);
+// TODO: Auth router
+app.use('/auth', authRouter);
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
-
-// TODO: Auth router
-app.use('/auth', authRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authController } from './auth.controller.js';
 import { loginSchema, registerSchema } from './auth.schema.js';
 import { validate } from '../../shared/middlewares/validate.js';
+import { requireAuth } from './auth.middleware.js';
 
 export const authRouter = Router();
 
@@ -15,4 +16,10 @@ authRouter.post(
   '/login',
   validate({ body: loginSchema }),
   authController.login.bind(authController),
+);
+
+authRouter.post(
+  '/logout',
+  requireAuth,
+  authController.logout.bind(authController),
 );
