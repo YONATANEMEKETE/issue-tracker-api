@@ -11,6 +11,7 @@ import {
   requireWorkspaceRole,
 } from './workspace.middleware.js';
 import { projectsRouter } from '../projects/projects.router.js';
+import { issuesRouter } from '../issues/issues.router.js';
 
 export const workspaceRouter = Router();
 
@@ -22,6 +23,13 @@ workspaceRouter.use(
   '/:workspaceId/projects',
   requireWorkspaceMember,
   projectsRouter,
+);
+
+// Mount workspace issues router (Step 9) - Add this line!
+workspaceRouter.use(
+  '/:workspaceId/issues',
+  requireWorkspaceMember,
+  issuesRouter,
 );
 
 // POST /workspaces - Create a new workspace

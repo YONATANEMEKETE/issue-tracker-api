@@ -3,6 +3,8 @@ import { projectController } from './projects.controller.js';
 import { createProjectSchema, updateProjectSchema } from './projects.schema.js';
 import { validate } from '../../shared/middlewares/validate.js';
 import { requireWorkspaceRole } from '../workspace/workspace.middleware.js';
+import { issueController } from '../issues/issues.controller.js';
+import { createIssueSchema } from '../issues/issues.schema.js';
 
 // mergeParams: true allows us to access :workspaceId from the parent router path!
 export const projectsRouter = Router({ mergeParams: true });
@@ -37,4 +39,19 @@ projectsRouter.delete(
   '/:projectId',
   requireWorkspaceRole(['admin']),
   projectController.delete.bind(projectController),
+);
+
+// --- Nested Issue Endpoints inside Projects ---
+// Paths are relative to: /workspaces/:workspaceId/projects
+// POST /workspaces/:workspaceId/projects/:projectId/issues - Create an issue (Admin/Member only)
+projectsRouter.post(
+  '/:projectId/issues',
+  requireWorkspaceRole(['admin', 'member']),
+  validate({ body: createIssueSchema }),
+  issueController.create.bind(issueController),
+);
+// GET /workspaces/:workspaceId/projects/:projectId/issues - List issues in a project (All members)
+projectsRouter.get(
+  '/:projectId/issues',
+  issueController.listProject.bind(issueController),
 );
