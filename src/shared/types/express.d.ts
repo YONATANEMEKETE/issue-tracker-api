@@ -15,8 +15,18 @@ declare global {
       createdAt: Date;
       updatedAt: Date;
     }
+
+    interface WorkspaceMembership {
+      id: string;
+      userId: string;
+      workspaceId: string;
+      role: WorkspaceRole;
+      joinedAt: Date;
+    }
+
     interface Request {
       user?: User;
+      membership?: WorkspaceMembership;
     }
   }
 }
