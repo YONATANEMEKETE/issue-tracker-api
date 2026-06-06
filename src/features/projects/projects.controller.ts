@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { projectService } from './projects.services.js';
+import { projectService } from './projects.service.js';
 import {
   CreateProjectInput,
   ProjectQueryInput,

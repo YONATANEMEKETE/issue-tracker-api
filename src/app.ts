@@ -41,7 +41,6 @@ app.use(
 );
 
 app.use(deserializeUser);
-// TODO: Auth router
 app.use('/auth', authRouter);
 app.use('/workspaces', workspaceRouter);
 
