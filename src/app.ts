@@ -6,6 +6,7 @@ import session from 'express-session';
 import pgSession from 'connect-pg-simple';
 import pg from 'pg';
 import { config } from './shared/configs/env.js';
+import { authRouter } from './features/auth/auth.router.js';
 
 export const app = express();
 
@@ -37,9 +38,13 @@ app.use(
   }),
 );
 
+
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
+
+// TODO: Auth router
+app.use('/auth', authRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
