@@ -1,0 +1,184 @@
+# =========================================================================
+# Issue Tracker API - REST Client Test Suite
+# =========================================================================
+# Run your Express server locally (e.g. `pnpm run dev`) before running tests.
+# Click the "Send Request" button above each endpoint in order.
+# The extension automatically preserves session cookies across requests!
+
+@baseUrl = http://localhost:3000
+
+# -------------------------------------------------------------------------
+# 1. Authentication Flow
+# -------------------------------------------------------------------------
+
+### Register a new user
+# @name register
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Alex Developer",
+  "email": "alex.dev@example.com",
+  "password": "SecurePassword123"
+}
+
+### Get profile details of currently logged-in user
+# (Should work automatically after register/login because cookie is stored)
+# @name getMe
+GET {{baseUrl}}/auth/me
+
+### Logout (Destroys session and clears cookie)
+# @name logout
+POST {{baseUrl}}/auth/logout
+
+### Try to access profile after logout (Expect 401 Unauthorized)
+GET {{baseUrl}}/auth/me
+
+### Login back in to continue testing
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "alex.dev@example.com",
+  "password": "SecurePassword123"
+}
+
+
+# -------------------------------------------------------------------------
+# 2. Workspace Flow
+# -------------------------------------------------------------------------
+
+### Create a new workspace
+# (The creator is automatically made an 'admin')
+# @name createWorkspace
+POST {{baseUrl}}/workspaces
+Content-Type: application/json
+
+{
+  "name": "Development Labs"
+}
+
+### List workspaces where user is a member
+# @name listWorkspaces
+GET {{baseUrl}}/workspaces
+
+### Fetch workspace details
+# Replace 'ws_cl...' with your actual workspace ID from createWorkspace response
+@workspaceId = cmq3ceiul000190vdncw8ps9z
+
+GET {{baseUrl}}/workspaces/{{workspaceId}}
+
+### Update workspace name (Admins only)
+PATCH {{baseUrl}}/workspaces/{{workspaceId}}
+Content-Type: application/json
+
+{
+  "name": "Design Labs & Engineering"
+}
+
+
+# -------------------------------------------------------------------------
+# 3. Project Flow (Scoped to Workspace)
+# -------------------------------------------------------------------------
+
+### Create a project inside the workspace (Admins only)
+# @name createProject
+POST {{baseUrl}}/workspaces/{{workspaceId}}/projects
+Content-Type: application/json
+
+{
+  "name": "Monolith API Service v1",
+  "description": "Core Express REST application built in layers"
+}
+
+### List projects in workspace
+# @name listProjects
+GET {{baseUrl}}/workspaces/{{workspaceId}}/projects
+
+### Fetch a single project details
+# Replace 'proj_cl...' with the ID from createProject response
+@projectId = cmq3cjkp3000490vdxb9sp6hy
+
+GET {{baseUrl}}/workspaces/{{workspaceId}}/projects/{{projectId}}
+
+### Update project status/details (Admins only)
+PATCH {{baseUrl}}/workspaces/{{workspaceId}}/projects/{{projectId}}
+Content-Type: application/json
+
+{
+  "name": "Decoupled API Service v1",
+  "status": "active"
+}
+
+
+# -------------------------------------------------------------------------
+# 4. Issue Flow (Scoped to Project & Workspace)
+# -------------------------------------------------------------------------
+
+### Create an issue inside the project (Admins/Members only)
+# @name createIssue
+POST {{baseUrl}}/workspaces/{{workspaceId}}/projects/{{projectId}}/issues
+Content-Type: application/json
+
+{
+  "title": "Set up database connection pool",
+  "description": "Configure pg.Pool and Prisma connection limits in src/app.ts",
+  "priority": "high"
+}
+
+### List workspace issues (Default: active, non-archived)
+# @name listWorkspaceIssues
+GET {{baseUrl}}/workspaces/{{workspaceId}}/issues
+
+### List issues with pagination, sorting, and status filtering
+GET {{baseUrl}}/workspaces/{{workspaceId}}/issues?page=1&limit=5&sortBy=createdAt&sortOrder=desc&status=backlog
+
+### List project issues
+GET {{baseUrl}}/workspaces/{{workspaceId}}/projects/{{projectId}}/issues
+
+### Fetch a single issue details
+# Replace 'iss_cl...' with the ID from createIssue response
+@issueId = iss_cl...
+
+GET {{baseUrl}}/workspaces/{{workspaceId}}/issues/{{issueId}}
+
+### Update issue status / Assign issue (Admins/Members only)
+PATCH {{baseUrl}}/workspaces/{{workspaceId}}/issues/{{issueId}}
+Content-Type: application/json
+
+{
+  "status": "in_progress",
+  "priority": "medium"
+}
+
+
+# -------------------------------------------------------------------------
+# 5. Comment Flow (Scoped to Issue)
+# -------------------------------------------------------------------------
+
+### Create a comment on the issue (Admins/Members only)
+# @name createComment
+POST {{baseUrl}}/workspaces/{{workspaceId}}/issues/{{issueId}}/comments
+Content-Type: application/json
+
+{
+  "body": "PR raised for review. Verified connection parameters locally on dev database."
+}
+
+### List comments for the issue
+GET {{baseUrl}}/workspaces/{{workspaceId}}/issues/{{issueId}}/comments
+
+
+# -------------------------------------------------------------------------
+# 6. Security Scopes & Access Denials
+# -------------------------------------------------------------------------
+
+### Try to access projects of a workspace you do NOT belong to (Expect 403 Forbidden)
+GET {{baseUrl}}/workspaces/ws_acme/projects
+
+### Try to delete a project in a workspace you do NOT belong to (Expect 403 Forbidden)
+DELETE {{baseUrl}}/workspaces/ws_acme/projects/proj_backend
+
+### Soft-delete (Archive) project (Admins only - Expect 204 No Content)
+DELETE {{baseUrl}}/workspaces/{{workspaceId}}/projects/{{projectId}}

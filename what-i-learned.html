@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>What I Learned: Issue Tracker API</title>
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #09090b; /* Zinc 950 */
+      --card-bg: rgba(24, 24, 27, 0.6); /* Zinc 900 with opacity */
+      --card-border: rgba(63, 63, 70, 0.4); /* Zinc 700 with opacity */
+      --text-primary: #f4f4f5; /* Zinc 100 */
+      --text-secondary: #a1a1aa; /* Zinc 400 */
+      --accent-primary: #8b5cf6; /* Violet 500 */
+      --accent-secondary: #ec4899; /* Pink 500 */
+      --gradient-text: linear-gradient(135deg, #a78bfa 0%, #f472b6 100%);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Ambient Background Gradients */
+    body::before {
+      content: '';
+      position: absolute;
+      top: -10%;
+      left: -10%;
+      width: 50%;
+      height: 50%;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    body::after {
+      content: '';
+      position: absolute;
+      bottom: -10%;
+      right: -10%;
+      width: 60%;
+      height: 60%;
+      background: radial-gradient(circle, rgba(236, 72, 153, 0.1) 0%, transparent 70%);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 4rem 1.5rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0.35rem 1rem;
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 9999px;
+      color: #c084fc;
+      margin-bottom: 1.5rem;
+    }
+
+    h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: var(--gradient-text);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 1rem;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 1.25rem;
+      font-weight: 300;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 1.25rem;
+      padding: 2.5rem;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(139, 92, 246, 0.5);
+      box-shadow: 0 12px 30px rgba(139, 92, 246, 0.08);
+    }
+
+    .card-num {
+      position: absolute;
+      top: 1.5rem;
+      right: 2rem;
+      font-size: 3.5rem;
+      font-weight: 800;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, transparent 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .card-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .card-title svg {
+      width: 24px;
+      height: 24px;
+      color: var(--accent-primary);
+    }
+
+    .card-body {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+    }
+
+    .card-body p {
+      margin-bottom: 1rem;
+    }
+
+    .card-body p:last-child {
+      margin-bottom: 0;
+    }
+
+    .card-body ul {
+      list-style-type: none;
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .card-body li {
+      position: relative;
+      padding-left: 1.75rem;
+    }
+
+    .card-body li::before {
+      content: "→";
+      position: absolute;
+      left: 0;
+      color: var(--accent-secondary);
+      font-weight: bold;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 5rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(63, 63, 70, 0.3);
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    .highlight {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 2.5rem 1rem;
+      }
+      h1 {
+        font-size: 2.25rem;
+      }
+      .card {
+        padding: 1.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <span class="badge">Milestones 1–11 Completed</span>
+      <h1>What I Learned</h1>
+      <p class="subtitle">Reflections on transitioning from frontend mechanics to multi-tenant backend architecture while building the Issue Tracker API.</p>
+    </header>
+
+    <main class="timeline">
+
+      <!-- Card 1: Hashing & Security -->
+      <section class="card">
+        <div class="card-num">01</div>
+        <h2 class="card-title">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"></path>
+          </svg>
+          The Defensive Hashing Mindset
+        </h2>
+        <div class="card-body">
+          <p>On the frontend, security is about hiding buttons. On the backend, <span class="highlight">the network is hostile</span>, and plain-text passwords are a critical vulnerability. Hashing is strict one-way encryption.</p>
+          <p>Using <span class="highlight">Argon2</span> ensures protection because it is a memory-hard algorithm. Attackers cannot easily brute-force the hashes even if they steal the database because the function is deliberately slow and resource-intensive.</p>
+          <ul>
+            <li>Never store passwords in plain text.</li>
+            <li>Salting and stretching are handled automatically inside Argon2 to prevent rainbow table attacks.</li>
+            <li>Always return generic login messages ("Invalid email or password") to block email enumeration attacks.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Card 2: Decoupled Domain Models -->
+      <section class="card">
+        <div class="card-num">02</div>
+        <h2 class="card-title">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14.25 9.75L16.5 12l-2.25 2.25m-4.5 0L7.5 12l2.25-2.25M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z"></path>
+          </svg>
+          Decoupling Database from Domain (Anti-Corruption)
+        </h2>
+        <div class="card-body">
+          <p>Tying the rest of the application directly to the ORM (Prisma) generated types creates tight coupling. If the database schema changes, the entire application breaks.</p>
+          <p>Creating <span class="highlight">Domain Types</span> (like custom User interfaces) and a serialization utility (`sanitizeUser`) forms an anti-corruption layer. Only the database layer knows about Prisma; the rest of the app operates on pure domain models.</p>
+          <ul>
+            <li>Exposing database schemas directly to controllers leaks internal details.</li>
+            <li>Sanitizing records (like removing `passwordHash`) ensures sensitive fields are never leaked to HTTP clients.</li>
+            <li>Makes swapping database layers or schemas in the future far easier.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Card 3: Layered Monolith Architecture -->
+      <section class="card">
+        <div class="card-num">03</div>
+        <h2 class="card-title">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"></path>
+          </svg>
+          Separation of Layered Responsibilities
+        </h2>
+        <div class="card-body">
+          <p>Structuring our monolith into specific modules and layers keeps handlers thin and boundaries clean. Every layer has exactly one job:</p>
+          <ul>
+            <li><span class="highlight">Router</span>: Maps paths and chains edge middlewares (Validation, Authentication, Authorization).</li>
+            <li><span class="highlight">Middleware</span>: Intercepts requests for cross-cutting tasks (validating schemas, fetching session state, asserting roles).</li>
+            <li><span class="highlight">Controller</span>: Translates HTTP. It parses route parameters, executes requests, sets cookies, and formats JSON.</li>
+            <li><span class="highlight">Service</span>: Houses core business logic and performs relational checks.</li>
+            <li><span class="highlight">Repository</span>: Executes raw data access (Prisma / SQL), hiding query implementation details.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Card 4: Multi-Tenant Scoping -->
+      <section class="card">
+        <div class="card-num">04</div>
+        <h2 class="card-title">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"></path>
+          </svg>
+          Authentication vs. Authorization Scoping
+        </h2>
+        <div class="card-body">
+          <p>Knowing who the user is (Authentication) is only half the battle. Checking what workspace resources they can access (Authorization) is crucial for multi-tenant isolation.</p>
+          <p>Using Express nested routers with <span class="highlight">`mergeParams: true`</span> allowed us to build hierarchical access control. We check workspace membership once at the parent mount point, protecting all nested sub-routes (projects, issues, comments).</p>
+          <ul>
+            <li>`requireAuth` verifies the session exists.</li>
+            <li>`requireWorkspaceMember` extracts `:workspaceId`, verifies membership, and populates `req.membership`.</li>
+            <li>`requireWorkspaceRole` checks permissions (e.g. blocking viewers from writing).</li>
+            <li>Resource scope checks verify that projects and issues belong to the target workspace to prevent cross-tenant leaks.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Card 5: Database Invariants -->
+      <section class="card">
+        <div class="card-num">05</div>
+        <h2 class="card-title">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 1.028-.394 1.914-1.028 2.583M20.25 6.375c0-1.028-.394-1.914-1.028-2.583m1.028 2.583a4.897 4.897 0 01-1.028 2.583m-17.222-2.583c0 1.028.394 1.914 1.028 2.583m-1.028-2.583c0-1.028.394-1.914 1.028-2.583m-1.028 2.583a4.897 4.897 0 001.028 2.583m0-5.166a4.897 4.897 0 00-1.028 2.583m0 0V18c0 1.62 3.619 3 8.056 3 4.437 0 8.056-1.38 8.056-3V6.375m-16.112 0a4.897 4.897 0 011.028-2.583m15.084 2.583a4.897 4.897 0 00-1.028-2.583m0 0c0-1.028-.362-1.914-.94-2.583m.94 2.583a4.897 4.897 0 01-.94 2.583M3.75 6.375c0-1.028.362-1.914.94-2.583m-.94 2.583a4.897 4.897 0 00.94 2.583m0 0c0-1.028.362-1.914.94-2.583m-.94 2.583a4.897 4.897 0 01.94 2.583m0 0h10.5m-12.008 3.5h13.508m-13.508 3.5h13.508m-13.508 3.5h13.508M1.5 10.5a8.25 8.25 0 0115 0c0 .356-.023.707-.068 1.05m-14.864 0a8.25 8.25 0 0014.864 0z"></path>
+          </svg>
+          Database Invariants & API Usability
+        </h2>
+        <div class="card-body">
+          <p>Good API list behavior and transactional integrity are crucial for a professional-grade backend.</p>
+          <ul>
+            <li><span class="highlight">Database Transactions</span>: Wrapped workspace creation and admin membership creation in an atomic transaction (`prisma.$transaction`) to prevent orphaned workspaces.</li>
+            <li><span class="highlight">Stable Ordering</span>: Appended a unique ID fallback (`{ id: 'asc' }`) to all query sorting arrays. This prevents rows from shifting randomly between pages as a user scrolls.</li>
+            <li><span class="highlight">Offset Pagination</span>: Implemented parallel queries (`Promise.all`) running a count query and a limit/skip query to return predictable metadata (`{ data, meta: { page, limit, total } }`).</li>
+            <li><span class="highlight">Soft Deletion</span>: Configured project and issue deletions as soft updates (setting status to `'archived'`) to preserve database history.</li>
+          </ul>
+        </div>
+      </section>
+
+    </main>
+
+    <footer>
+      <p>Issue Tracker API &copy; 2026. Reflected and compiled with care.</p>
+    </footer>
+  </div>
+
+</body>
+</html>

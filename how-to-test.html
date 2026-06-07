@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Testing Guide: Issue Tracker</title>
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #09090b; /* Zinc 950 */
+      --card-bg: rgba(24, 24, 27, 0.6); /* Zinc 900 */
+      --card-border: rgba(63, 63, 70, 0.4);
+      --text-primary: #f4f4f5;
+      --text-secondary: #a1a1aa;
+      --accent-primary: #8b5cf6;
+      --accent-secondary: #ec4899;
+      --gradient-text: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+      
+      /* HTTP Badges */
+      --get-color: #10b981;
+      --post-color: #3b82f6;
+      --patch-color: #f59e0b;
+      --delete-color: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Background glows */
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 40%;
+      height: 40%;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, transparent 60%);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 4rem 1.5rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0.35rem 1rem;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 9999px;
+      color: #38bdf8;
+      margin-bottom: 1.5rem;
+    }
+
+    h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: var(--gradient-text);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 1rem;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 1.25rem;
+      font-weight: 300;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .alert {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      color: #fbd38d;
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      margin-bottom: 3rem;
+      font-size: 1rem;
+    }
+
+    .section-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin: 3rem 0 1.5rem 0;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(63, 63, 70, 0.4);
+      color: #38bdf8;
+    }
+
+    .test-case {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 1rem;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      backdrop-filter: blur(12px);
+      transition: border-color 0.3s ease;
+    }
+
+    .test-case:hover {
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+
+    .test-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .test-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .method {
+      font-size: 0.85rem;
+      font-weight: 800;
+      padding: 0.3rem 0.75rem;
+      border-radius: 0.35rem;
+      text-transform: uppercase;
+      color: #fff;
+    }
+
+    .method.get { background-color: var(--get-color); }
+    .method.post { background-color: var(--post-color); }
+    .method.patch { background-color: var(--patch-color); }
+    .method.delete { background-color: var(--delete-color); }
+
+    .path {
+      font-family: monospace;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .status-badge {
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-secondary);
+    }
+
+    .status-badge.success-200 { color: #34d399; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.25); }
+    .status-badge.success-201 { color: #6ee7b7; background: rgba(52, 211, 153, 0.1); border-color: rgba(52, 211, 153, 0.25); }
+    .status-badge.success-204 { color: #a7f3d0; background: rgba(52, 211, 153, 0.05); border-color: rgba(52, 211, 153, 0.15); }
+    .status-badge.fail-400 { color: #fca5a5; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.25); }
+    .status-badge.fail-401 { color: #f87171; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.25); }
+    .status-badge.fail-403 { color: #f87171; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.25); }
+    .status-badge.fail-409 { color: #fbbf24; background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.25); }
+
+    .test-description {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .code-container {
+      margin-top: 1rem;
+    }
+
+    .code-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.35rem;
+      font-weight: 600;
+    }
+
+    pre {
+      background: #18181b;
+      border: 1px solid rgba(63, 63, 70, 0.5);
+      border-radius: 0.5rem;
+      padding: 1.25rem;
+      overflow-x: auto;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.95rem;
+      color: #e4e4e7;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 5rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(63, 63, 70, 0.3);
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <span class="badge">Thunder Client REST Guide</span>
+      <h1>API Manual Testing Guide</h1>
+      <p class="subtitle">Step-by-step HTTP requests to verify Authentication, Workspaces, Projects, Issues, Comments, and Scoped Permissions.</p>
+    </header>
+
+    <div class="alert">
+      <strong>⚡ Thunder Client Cookie Handling:</strong> Because we are using session-based authentication, Thunder Client will automatically capture the <code>sid</code> cookie set by the server on a successful Register or Login request. Subsequent requests made in the client will automatically include this cookie!
+    </div>
+
+    <!-- SECTION: AUTHENTICATION -->
+    <h2 class="section-title">1. Authentication Flow</h2>
+
+    <!-- Register -->
+    <div class="test-case">
+      <div class="test-header">
+        <div class="test-info">
+          <span class="method post">POST</span>
+          <span class="path">/auth/register</span>
+        </div>
+        <span class="status-badge success-201">201 Created</span>
+      </div>
+      <p class="test-description">Create a new user account. This starts a session automatically.</p>
+      <div class="code-container">
+        <div class="code-label">Request Body (JSON)</div>
+        <pre>{
+  "name": "Alex Developer",
+  "email": "alex@example.com",
+  "password": "SecurePassword123"
+}</pre>
+      </div>
+    </div>
+
+    <!-- Get Me -->
+    <div class="test-case">
+      <div class="test-header">
+        <div class="test-info">
+          <span class="method get">GET</span>
+          <span class="path">/auth/me</span>
+        </div>
+        <span class="status-badge success-200">200 OK</span>
+      </div>
+      <p class="test-description">Fetch the profile details of the currently logged-in user.</p>
+      <div class="code-container">
+        <div class="code-label">Expected Response</div>
+        <pre>{
+  "data": {
+    "id": "cuid-string",
+    "name": "Alex Developer",
+    "email": "alex@example.com",
+    "createdAt": "date-string",
+    "updatedAt": "date-string"
+  }
+}</pre>
+      </div>
+    </div>
+
+    <!-- Logout -->
+    <div class="test-case">
+      <div class="test-header">
+        <div class="test-info">
+          <span class="method post">POST</span>
+          <span class="path">/auth/logout</span>
+        </div>
+        <span class="status-badge success-204">204 No Content</span>
+      </div>
+      <p class="test-description">Invalidates the session in the database and clears the cookie.</p>
+    </div>
+
+    <!-- Login -->
+    <div class="test-case">
+      <div class="test-header">
+        <div class="test-info">
+          <span class="method post">POST</span>
+          <span class="path">/auth/login</span>
+        </div>
+        <span class="status-badge success-200">200 OK</span>
+      </div>
+      <p class="test-description">Authenticate with credentials to open a new session.</p>
+      <div class="code-container">
+        <div class="code-label">Request Body (JSON)</div>
+        <pre>{
+  "email": "alex@example.com",
+  "password": "SecurePassword123"
+}</pre>
+      </div>
+    </div>
+
+
+    <!-- SECTION: WORKSPACES -->
+    <h2 class="section-title">2. Workspace Management</h2>
+
+    <!-- Create Workspace -->
+    <div class="test-case">
+      <div class="test-header">
+        <div class="test-info">
+          <span class="method post">POST</span>
+          <span class="path">/workspaces</span>
+        </div>
+        <span class="status-badge success-201">201 Created</span>
+      </div>
+      <p class="test-description">Create a new workspace. The creating user is automatically joined to it as an <strong>admin</strong>.</p>
+      <div class="code-container">
+        <div class="code-label">Request Body (JSON)</div>
+        <pre>{
+  "name": "Development Labs"
+}</pre>
+      </div>
+    </div>
+
+    <!-- List Workspaces -->
+    <div class="test-case">
+      <div class="test-header">
+        <div class="test-info">
+          <span class="method get">GET</span>
+          <span class="path">/workspaces</span>
+        </div>
+        <span class="status-badge success-200">200 OK</span>
+      </div>
+      <p class="test-description">List all workspaces where the current user is a member.</p>
+    </div>
+
+    <!-- Get Workspace -->
+    <div class="test-case">
+      <div class="test-header">
+        <div class="test-info">
+          <span class="method get">GET</span>
+          <span class="path">/workspaces/:workspaceId</span>
+        </div>
+        <span class="status-badge success-200">200 OK</span>
+      </div>
+      <p class="test-description">Get detailed information about a workspace. <i>Replace :workspaceId with the ID returned by the creation response.</i></p>
+    </div>
+
+    <!-- Update Workspace -->
+    <div class="test-case">
+      <div class="test-header">
+        <div class="test-info">
+          <span class="method patch">PATCH</span>
+          <span class="path">/workspaces/:workspaceId</span>
+        </div>
+        <span class="status-badge success-200">200 OK</span>
+      </div>
+      <p class="test-description">Update workspace settings. Allowed for <strong>admins only</strong>.</p>
+      <div class="code-container">
+        <div class="code-label">Request Body (JSON)</div>
+        <pre>{
+  "name": "Design Labs & Engineering"
+}</pre>
+      </div>
+    </div>
+
+
+    <!-- SECTION: PROJECTS -->
+    <h2 class="section-title">3. Projects Scoped Inside Workspace</h2>
+
+    <!-- Create Project -->
+    <div class="test-case">
+      <div class="test-header">
+        <div class="test-info">
+          <span class="method post">POST</span>
+          <span class="path">/workspaces/:workspaceId/projects</span>
+        </div>
+        <span class="status-badge success-201">201 Created</span>
+      </div>
+      <p class="test-description">Create a project inside the workspace. Allowed for <strong>admins only</strong>.</p>
+      <div class="code-container">
+        <div class="code-label">Request Body (JSON)</div>
+        <pre>{
+  "name": "API Service v1",
+  "description": "Core Express REST application"
+}</pre>
+      </div>
+    </div>
+
+    <!-- List Projects -->
+    <div class="test-case">
+      <div class="test-header">
+        <div class="test-info">
+          <span class="method get">GET</span>
+          <span class="path">/workspaces/:workspaceId/projects</span>
+        </div>
+        <span class="status-badge success-200">200 OK</span>
+      </div>
+      <p class="test-description">List projects within this workspace. Supports query sorting/pagination.</p>
+    </div>
+
+    <!-- Update Project -->
+    <div class="test-case">
+      <div class="test-header">
+        <div class="test-info">
+          <span class="method patch">PATCH</span>
+          <span class="path">/workspaces/:workspaceId/projects/:projectId</span>
+        </div>
+        <span class="status-badge success-200">200 OK</span>
+      </div>
+      <p class="test-description">Update project attributes. Allowed for <strong>admins only</strong>.</p>
+      <div class="code-container">
+        <div class="code-label">Request Body (JSON)</div>
+        <pre>{
+  "name": "Monolith API Service v1",
+  "status": "active"
+}</pre>
+      </div>
+    </div>
+
+    <!-- Delete Project -->
+    <div class="test-case">
+      <div class="test-header">
+        <div class="test-info">
+          <span class="method delete">DELETE</span>
+          <span class="path">/workspaces/:workspaceId/projects/:projectId</span>
+        </div>
+        <span class="status-badge success-204">204 No Content</span>
+      </div>
+      <p class="test-description">Soft-delete (archives) a project. Allowed for <strong>admins only</strong>.</p>
+    </div>
+
+
+    <!-- SECTION: ISSUES -->
+    <h2 class="section-title">4. Issues Scoped Inside Projects & Workspaces</h2>
+
+    <!-- Create Issue -->
+    <div class="test-case">
+      <div class="test-header">
+        <div class="test-info">
+          <span class="method post">POST</span>
+          <span class="path">/workspaces/:workspaceId/projects/:projectId/issues</span>
+        </div>
+        <span class="status-badge success-201">201 Created</span>
+      </div>
+      <p class="test-description">Create an issue inside a project. Allowed for <strong>admins and members only</strong> (viewers blocked).</p>
+      <div class="code-container">
+        <div class="code-label">Request Body (JSON)</div>
+        <pre>{
+  "title": "Set up database connection pool",
+  "description": "Configure pg.Pool and Prisma connection limits",
+  "priority": "high"
+}</pre>
+      </div>
+    </div>
+
+    <!-- List Workspace Issues -->
+    <div class="test-case">
+      <div class="test-header">
+        <div class="test-info">
+          <span class="method get">GET</span>
+          <span class="path">/workspaces/:workspaceId/issues</span>
+        </div>
+        <span class="status-badge success-200">200 OK</span>
+      </div>
+      <p class="test-description">List all issues inside the workspace. Supports filters and paginations.</p>
+      <div class="code-container">
+        <div class="code-label">Example Query String</div>
+        <pre>?page=1&limit=10&sortBy=createdAt&sortOrder=desc&status=todo</pre>
+      </div>
+    </div>
+
+    <!-- List Project Issues -->
+    <div class="test-case">
+      <div class="test-header">
+        <div class="test-info">
+          <span class="method get">GET</span>
+          <span class="path">/workspaces/:workspaceId/projects/:projectId/issues</span>
+        </div>
+        <span class="status-badge success-200">200 OK</span>
+      </div>
+      <p class="test-description">List issues belonging strictly to one project. Supports query limits/sorting.</p>
+    </div>
+
+    <!-- Update Issue -->
+    <div class="test-case">
+      <div class="test-header">
+        <div class="test-info">
+          <span class="method patch">PATCH</span>
+          <span class="path">/workspaces/:workspaceId/issues/:issueId</span>
+        </div>
+        <span class="status-badge success-200">200 OK</span>
+      </div>
+      <p class="test-description">Update issue fields or perform assignments. Allowed for <strong>admins and members only</strong>.</p>
+      <div class="code-container">
+        <div class="code-label">Request Body (JSON)</div>
+        <pre>{
+  "status": "in_progress",
+  "assigneeUserId": "some-member-cuid"
+}</pre>
+      </div>
+    </div>
+
+
+    <!-- SECTION: COMMENTS -->
+    <h2 class="section-title">5. Comments Scoped Inside Issues</h2>
+
+    <!-- Create Comment -->
+    <div class="test-case">
+      <div class="test-header">
+        <div class="test-info">
+          <span class="method post">POST</span>
+          <span class="path">/workspaces/:workspaceId/issues/:issueId/comments</span>
+        </div>
+        <span class="status-badge success-201">201 Created</span>
+      </div>
+      <p class="test-description">Post a comment on a target issue. Allowed for <strong>admins and members only</strong>.</p>
+      <div class="code-container">
+        <div class="code-label">Request Body (JSON)</div>
+        <pre>{
+  "body": "PR raised for review. Verified connection parameters locally."
+}</pre>
+      </div>
+    </div>
+
+    <!-- List Comments -->
+    <div class="test-case">
+      <div class="test-header">
+        <div class="test-info">
+          <span class="method get">GET</span>
+          <span class="path">/workspaces/:workspaceId/issues/:issueId/comments</span>
+        </div>
+        <span class="status-badge success-200">200 OK</span>
+      </div>
+      <p class="test-description">List discussion logs for an issue in chronological order. Authors are attached.</p>
+    </div>
+
+
+    <!-- SECTION: SECURITY EDGE CASES -->
+    <h2 class="section-title">6. Security & Authorization Boundary Checks</h2>
+
+    <!-- Check 1 -->
+    <div class="test-case">
+      <div class="test-header">
+        <div class="test-info">
+          <span class="method get">GET</span>
+          <span class="path">/workspaces/ws_acme/projects</span>
+        </div>
+        <span class="status-badge fail-403">403 Forbidden</span>
+      </div>
+      <p class="test-description"><strong>Test: Cross-tenant data isolation.</strong><br>Log in as your new user (e.g. <code>alex@example.com</code>). Make a query to list projects in the seeded <code>ws_acme</code> workspace (which belongs to Alice/Bob/Carol, not you).</p>
+      <div class="code-container">
+        <div class="code-label">Expected Error Response</div>
+        <pre>{
+  "error": {
+    "code": "FORBIDDEN",
+    "message": "You are not a member of this workspace"
+  }
+}</pre>
+      </div>
+    </div>
+
+    <!-- Check 2 -->
+    <div class="test-case">
+      <div class="test-header">
+        <div class="test-info">
+          <span class="method post">POST</span>
+          <span class="path">/workspaces/:workspaceId/projects</span>
+        </div>
+        <span class="status-badge fail-403">403 Forbidden</span>
+      </div>
+      <p class="test-description"><strong>Test: Role privileges.</strong><br>Log in as a user who is a <strong>member</strong> of the workspace but not an admin (e.g., <code>bob@example.com</code>, after updating their password in the database seed). Try to create a project.</p>
+      <div class="code-container">
+        <div class="code-label">Expected Error Response</div>
+        <pre>{
+  "error": {
+    "code": "FORBIDDEN",
+    "message": "You do not have permission to perform this action"
+  }
+}</pre>
+      </div>
+    </div>
+
+    <!-- Check 3 -->
+    <div class="test-case">
+      <div class="test-header">
+        <div class="test-info">
+          <span class="method patch">PATCH</span>
+          <span class="path">/workspaces/:workspaceId/issues/:issueId</span>
+        </div>
+        <span class="status-badge fail-400">400 Bad Request</span>
+      </div>
+      <p class="test-description"><strong>Test: Relational Boundary checking.</strong><br>Log in as an admin of the workspace. Attempt to update/assign an issue to a user ID that does not belong to this workspace membership.</p>
+      <div class="code-container">
+        <div class="code-label">Expected Error Response</div>
+        <pre>{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Assignee must be a member of the workspace"
+  }
+}</pre>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>Issue Tracker API Rest Test Suite &copy; 2026.</p>
+  </footer>
+</div>
+
+</body>
+</html>
